@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scene base_name="TCP" name_space="Scene" name_suffix="0" persistency="666">
+  <Objects>
+    <Object base_name="Root" name_space="__global__" name_suffix="0" persistency="666" pickable="0" type="Object" visible="4294967295">
+      <Object ambient="0.3 0.3 0.3 1" base_name="light" beacon="Headlight_beacon" diffuse="1 1 1 1" lightType="point" name_space="__global__" name_suffix="0" on="1" persistency="666" photometricMap="" pickable="0" shadow="0" shadowColor="0.1 0.1 0.1 1" shadowMapRes="2048" shadowVolume="1e+06 1e+06 1e+06 -1e+06 -1e+06 -1e+06 1" specular="0.1 0.1 0.1 1" type="Light" visible="4294967295">
+        <Object accept_root="1" aspect="1" at="0 0 0" at_dir="0" base_name="Default" far="512" fov="1.0472" from="2.73154 1.6575 1.51281" name_space="__global__" name_suffix="0" near="0.1" orthoSize="100" persistency="666" pickable="0" scale="1 1 1" type="Camera" up="0 1 0" visible="4294967295">
+          <attachments>
+            <Node base_name="transform" name_space="VRAttachment" name_suffix="0" persistency="666" value=""/>
+          </attachments>
+          <Object at="0 0 -1" at_dir="0" base_name="Headlight_beacon" from="0 0 0" light="light" name_space="__global__" name_suffix="0" persistency="666" pickable="0" scale="1 1 1" type="LightBeacon" up="0 1 0" visible="4294967295">
+            <attachments>
+              <Node base_name="transform" name_space="VRAttachment" name_suffix="0" persistency="666" value=""/>
+            </attachments>
+            <constraint persistency="666"/>
+          </Object>
+          <constraint persistency="666"/>
+        </Object>
+      </Object>
+    </Object>
+  </Objects>
+  <Cameras activeCam="Default" persistency="666"/>
+  <Rendering deferred_rendering="0" fogColor="0.5 0.5 0.5 1" fogParams="0 0 100 0.1" frustum_culling="1" fxaa="0" hmdd="0" marker="0" occlusion_culling="0" persistency="666" ssao="0" ssao_kernel="4" ssao_noise="4" ssao_radius="0.02" two_sided="1"/>
+  <Scripts persistency="666">
+    <Script base_name="ClientSend" group="ClientServer" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+
+	if hasattr(VR, 'cli'):
+		VR.cli.send(message)
+	else: 
+		print "could not send message because there is no client !"
+</core>
+      <arg type="str" value="0" base_name="message" name_space="ClientSend" name_suffix="0" persistency="666"/>
+    </Script>
+    <Script base_name="TCPclient" group="ClientServer" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+
+	address = '141.3.150.44'
+	port = 1111
+	
+	def onClientMsg(m):
+		print 'client received:', m
+		VR.chatModule_handler(m)
+		
+	VR.cli = VR.TCPClient()
+	VR.cli.onMessage(onClientMsg)
+	VR.cli.connect(address)
+	VR.cli.send('hello Server!')
+</core>
+    </Script>
+    <Script base_name="TCPserver" group="ClientServer" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+
+	def onServerMsg(m):
+		print 'server received:', m
+		return "hello from server!"
+		
+	port = 1111 # port for the server to listen on
+
+	VR.serv = VR.TCPServer() #initialize TCP server 
+	VR.serv.onMessage(onServerMsg) #set an onMessage Callback
+	VR.serv.listen(port) #tell the server to listen on the port 
+	
+</core>
+    </Script>
+    <Script base_name="chatModule" group="chatModule" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="HTML">
+      <core>
+&lt;html&gt;
+	&lt;head&gt;
+		&lt;link rel="stylesheet" href="gui/font-awesome-4.5.0/css/font-awesome.min.css"&gt;
+		&lt;link rel="stylesheet" href="chatModule_css"&gt;
+	&lt;/head&gt;
+	&lt;body&gt;
+		&lt;div id="chatBox"&gt;
+			&lt;div id="background"&gt;
+					&lt;div id="messageContainer"&gt;
+					&lt;/div&gt;				
+	   				&lt;textarea id="messageContent" placeholder="Message" name="msg" required&gt;&lt;/textarea&gt;
+					&lt;button onclick="handleMessage();" class="button"&gt;Send&lt;/button&gt;
+					&lt;button onclick="sendDummy();" class="button"&gt;Send Dummy&lt;/button&gt;
+			&lt;/div&gt; 
+		&lt;/div&gt;
+		&lt;script&gt;
+		var websocket = new WebSocket('ws://localhost:5500');
+		websocket.onerror = function(e) { msg('error'); };
+		websocket.onmessage = function(m) { receiveMessage(m);};
+
+		var username = "User";
+		var seperator = "&lt;chatModule_seperator&gt;";
+		var messageIndex = 0;
+		
+		function send(m){ websocket.send(m); };
+			
+		function sendMessage(message)
+		{
+			send('chatModule_sendMessage'+ seperator + username + seperator + message);
+		}
+	
+	 	function displayMessage(messageOwner, messageText, origin)
+	 	{
+	 		var messageContainer = document.getElementById('messageContainer');
+
+			// Setup of the container which holds all elements of this message
+			var completeMessage = document.createElement("div");
+			completeMessage.className = origin + "CompleteMessage";
+			
+			// Create Username Container and fill with information
+			var message_User = document.createElement("div");
+			message_User.className = origin + "Username";
+			message_User.innerHTML = messageOwner;
+			var id = "message_" + messageIndex;
+			
+			// Create Content Container and fill with information			
+			var message_Content = "&lt;div id ='"+ id + "' onclick='copyMessage(" + id + ");' class='" + origin + "Message " + origin + "Triangle'&gt;" + messageText + "&lt;/div&gt;";
+			// Add the containers to complete the message and add to messageContainer
+			completeMessage.appendChild(message_User);
+			completeMessage.innerHTML += message_Content;
+			messageContainer.appendChild(completeMessage);
+			messageContainer.innerHTML += "&lt;br&gt;";
+			
+			// Scrolls the view down to the newest message
+			messageContainer.scrollTop = messageContainer.scrollHeight;
+			
+			messageIndex ++;
+	 	}
+		function handleMessage()
+		{
+			var inputField = document.getElementById("messageContent");
+			if(!isEmptyOrSpaces(inputField.value))
+			{
+				var messageContent = inputField.value;			
+				displayMessage(username, messageContent, "self");
+				sendMessage(messageContent);				
+			}
+			inputField.value = "";							
+		}
+		
+		function isEmptyOrSpaces(str)
+		{
+    		return str === null || str.match(/^ *$/) !== null;
+		}
+		function receiveMessage(message)
+		{	
+			var messageFragments = message.data.split(seperator);
+			if(messageFragments[0] == "chatModule_chatMessage")
+			{	
+				var user = messageFragments[1];
+				var msg = messageFragments[2];		
+				displayMessage(user, msg, "remote");
+			}	
+			if(messageFragments[0] == "chatModule_changeUsername")
+			{
+				var messageContainer = document.getElementById('messageContainer');
+				messageContainer.innerHTML = "";
+				var newUsername = messageFragments[1];
+				username = newUsername;
+			}					
+		}
+		function copyMessage(message)
+		{
+		   var copyContainer = document.getElementById("messageContent")
+		   var tempsave = copyContainer.value;
+		   copyContainer.value = message.innerHTML;
+		   copyContainer.select();
+		   document.execCommand('copy');
+		   copyContainer.value = tempsave;
+		}
+		function sendDummy()
+		{			
+			send("chatModule_chatMessage" + seperator + "Dummy" + seperator + "This is a test !");
+		}
+		function sendDebug(debugMessage)
+		{
+			send("chatModule_debugMessage" + seperator + debugMessage);
+		}
+		&lt;/script&gt;
+	&lt;/body&gt;
+&lt;/html&gt;
+</core>
+    </Script>
+    <Script base_name="chatModule_README" group="chatModule" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+	
+	# For the chatModule to function following scripts are needed :
+	# chatModule
+	# chatModule_controls
+	# chatModule_css
+	# chatModule_handler
+	# chatModule_init
+	
+	# Initializing the chatModule
+	#
+	# To initialize the chatModule the chatMoodule_init has to be called once in one of your scripts
+	# In this file the position of the control and chat panel can be ajusted
+	
+	# Sending Message to chatModule
+	#
+	# To pass a message to the chatModule call chatModule_handler and pass a string like :
+	# "chatModule_chatMessage&lt;chatModule_seperator&gt;" + user + "&lt;chatModule_seperator&gt;" + message
+	
+	# Receiving Messages from chatModule
+	#
+	# To receive a message from the chatModule either modify the chatModule_handler to pass the 
+	# message on to your script or listen for it by yourself
+	# The message is sent out as a string like this :
+	# "chatModule_sendMessage&lt;chatModule_seperator&gt;user&lt;chatModule_seperator&gt;message"
+	
+	# Customizing the chatModule
+	#
+	# The chatModule can be customized in the chatModule_css
+	
+	# Controlpanel
+	#
+	# The controlpanel contains buttons which toggle certain settings
+	# The button with the speech bubbles toggles the other buttons on and off to prevent gui cluttering
+	# The button with the eye icon can be used to hide/show the chatModule
+	# The button with the play icon can be used to enable/disable drag movement for the chatModule so you can move it around when enabled.
+	
+</core>
+    </Script>
+    <Script base_name="chatModule_controls" group="chatModule" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="HTML">
+      <core>
+&lt;head&gt;
+	&lt;link rel="stylesheet" href="gui/font-awesome-4.5.0/css/font-awesome.min.css"&gt;
+	&lt;link rel="stylesheet" href="chatModule_css"&gt;
+&lt;/head&gt;
+&lt;manifest "permissions": ["*://developer.mozilla.org/*","webRequest","clipboardWrite",
+"clipboardRead"]&gt;
+&lt;body&gt;
+	&lt;div id="controlButtonContainer"&gt;
+		&lt;button id="toggleButton" onclick="toggleControls();"&gt;&lt;i class="fa far fa-comments"&gt;&lt;/i&gt;&lt;/button&gt;
+		&lt;div id="controls"&gt;
+			&lt;button id = "dragButton" onClick="toggleDrag()" class="controlButtons"&gt;&lt;i id="dragToggleIcon" class="fa far fa-solid fa-play controlButtonIcons"&gt;&lt;/i&gt;&lt;/button&gt;
+			&lt;button id = "visibilityButton" onClick="toggleVisibility()" class="controlButtons"&gt;&lt;i id="visibilityToggleIcon" class="fa far fa-solid fa-eye-slash controlButtonIcons"&gt;&lt;/i&gt;&lt;/button&gt;
+		&lt;/div&gt;
+	&lt;/div&gt;
+	&lt;script&gt;
+		var websocket = new WebSocket('ws://localhost:5500');
+		websocket.onerror = function(e) { msg('error'); };
+		websocket.onmessage = function(m) { if(m.data) msg(m.data); };
+
+		function send(m){ websocket.send(m); };
+		
+
+		var controls = document.getElementById("controls");
+		function toggleControls()
+		{
+			var state = controls.style.display;
+			if(state == "none")
+			{
+				controls.style.display = "block";
+			}
+			else
+			{
+				controls.style.display = "none";
+			}
+			
+		}
+		function sendChatMessage()
+		{
+			var message = document.getElementById("input").value;
+			send('chatMessage;' + message);
+		}
+		var dragActive = false;
+		function toggleDrag() 
+		{
+			var dragButton = document.getElementById("dragButton");
+			if(dragActive == true)
+			{
+				send('chatModule_setDrag&lt;chatModule_seperator&gt;' + 0);
+				dragActive = false
+				document.getElementById("dragToggleIcon").className = "fa far fa-solid fa-play"
+			}
+			else if(dragActive == false)
+			{
+				send('chatModule_setDrag&lt;chatModule_seperator&gt;' + 1);
+				dragActive = true;
+				document.getElementById("dragToggleIcon").className = "fa far fa-solid fa-pause"
+			}
+		}
+		var chatVisible = true;
+		function toggleVisibility()
+		{
+			var visibilityButton = document.getElementById("visibilityButton");
+			if(chatVisible == true)
+			{
+				send('chatModule_setVisibility&lt;chatModule_seperator&gt;' + 0);
+				chatVisible = false
+				document.getElementById("visibilityToggleIcon").className = "fa far fa-solid fa-eye"
+			}
+			else if(chatVisible == false)
+			{
+				send('chatModule_setVisibility&lt;chatModule_seperator&gt;' + 1);
+				chatVisible = true;
+				document.getElementById("visibilityToggleIcon").className = "fa far fa-solid fa-eye-slash"
+			}
+		}
+		
+		var tbs = document.getElementsByClassName('tbb');
+		for (var tb in tbs) {
+			tbs[tb].onclick=function(event) {
+				if (event.which == 1) send(this.id);
+				if (event.which == 3) send('-'+this.id);
+			};
+		}
+	&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</core>
+    </Script>
+    <Script base_name="chatModule_css" group="chatModule" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="HTML">
+      <core>
+ {box-sizing: border-box;}
+
+#background {
+  max-width: 300px;
+  padding: 10px;
+  background-color: #23272a ;
+}
+
+textarea {
+  width: 100%;
+  padding: 15px;
+  margin: 5px 0 22px 0;
+  border: none;
+  background: #f1f1f1;
+  resize: none;
+  min-height: 50px;
+}
+.remoteMessage
+{
+	color: #2c2f33;
+	text-align: left;
+	
+	background-color: #99aab5;
+	position: relative;
+	padding: 5%;
+	display: inline-block;
+}
+.remoteUsername
+{
+	color: yellow;
+	font-weight: bold;
+}
+.selfUsername
+{
+	color: #ffffff;
+	font-weight: bold;
+}
+.selfMessage
+{
+	color: #2c2f33;
+	text-align: right;
+	
+	background-color: #99aab5;
+	position: relative;
+	padding: 5%;
+	display: inline-block;
+}
+.selfTriangle:after
+{
+  	content: "";
+  	width: 0px;
+  	height: 0px;
+ 	position: absolute;
+  	border-left: 7px solid #99aab5;
+  	border-right: 7px solid transparent;
+  	border-top: 7px solid #99aab5;
+  	border-bottom: 7px solid transparent;
+  	right: -11px;
+	top: 0px;
+}
+.remoteTriangle:before
+{
+  	content: "";
+  	width: 0px;
+  	height: 0px;
+  	position: absolute;
+  	border-left: 7px solid transparent;
+  	border-right: 7px solid #99aab5;
+  	border-top: 7px solid #99aab5;
+  	border-bottom: 7px solid transparent;
+  	left: -11px;
+  	top: 0px;
+}
+.remoteCompleteMessage
+{
+	text-align: left;
+}
+.selfCompleteMessage
+{
+	text-align: right;	
+}
+#messageContainer 
+{
+	width: 80%;
+	height: 50%;
+  	padding: 15px;
+  	margin: 5px 0 22px 0;
+  	border: none;
+ 	background-color:  #2c2f33;
+  	resize: none;
+  	overflow: auto;
+  	overflow-wrap: break-word;
+}
+
+.form-container textarea:focus 
+{
+  background-color: #ddd;
+  outline: none;
+}
+
+.button 
+{
+  background-color: #04AA6D;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom:10px;
+  opacity: 0.8;
+}
+.button:hover, .open-button:hover 
+{
+  opacity: 1;
+} 
+&lt;!-- chatModule_controls css--&gt;
+
+body
+{
+	background-color: #2c2f33;
+}
+#toggleButton
+{
+	font-size: 1000%;
+}
+#controlButtonContainer
+{
+	margin-top: auto;
+	display: grid;
+	justify-content: center;
+	align-items: center;
+}
+
+.controlButtonIcons
+{
+
+}
+.controlButtons
+{
+	display: flex;
+	position: relative;
+	flex-direction: column;
+	color: white;
+	background-color: #2c2f33;
+	border: 1vw solid rgba(255,215,0,1);
+	border-radius:5vw;
+	overflow: hidden;
+	font-size: 800%;
+	width: 100%;
+}
+</core>
+    </Script>
+    <Script base_name="chatModule_handler" group="chatModule" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR, os
+	if isinstance(dev, str):
+		m = dev
+	else:
+		m = dev.getMessage()
+		n = m.split("&lt;chatModule_seperator&gt;")
+		ID = dev.getKey()
+		VR.chatDev = dev
+		VR.chatID = ID
+	
+	if m.startswith("chatModule_setDrag"):
+		VR.chatModule.setPickable(int(n[1]))
+		print "chatModule set drag to " + n[1]
+	
+	if m.startswith("chatModule_setVisibility"):
+		VR.chatModule.setVisible(int(n[1]))
+		print "chatModule set visibility to " + n[1]
+	
+	if m.startswith("chatModule_sendMessage"):
+		print "chatModule sent Message: " + n[2] + " from User: " + n[1]
+		#Send Message to other client.
+		VR.ClientSend(m)
+		
+	if m.startswith("chatModule_chatMessage"):
+		print "chatModule received Message"
+		print m
+		VR.chatDev.answer(VR.chatID,m)
+
+	if m.startswith("chatModule_changeUsername"):
+		print"chatModule changed username"
+		print m
+		chatDev.answer(chatID,m)
+
+	if m.startswith("chatModule_debugMessage"):
+		print(m)
+		dev.answer(ID,m)
+</core>
+      <trig type="on_device" dev="server1" state="Released" param="" key="-1" base_name="trigger" name_space="__global__" name_suffix="4" persistency="666"/>
+    </Script>
+    <Script base_name="chatModule_init" group="chatModule" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+	
+	# Sprite for the Chat
+	if hasattr(VR, 'chatModule'): VR.chatModule.destroy()
+	VR.chatModule = VR.Sprite('chatModule')
+	VR.find('Default').addChild(VR.chatModule)
+	VR.chatModule.setFrom([10,-5,-20])
+	VR.chatModule.setSize(15,15)
+	VR.chatModule.webOpen('localhost:5500/chatModule', 400, 0.8)
+	VR.chatModule.getMaterial().enableTransparency()
+	VR.chatModule.getMaterial().setDepthTest('GL_ALWAYS')
+	
+	# Sprite for the Controls
+	if hasattr (VR,'chatSite'): VR.find('chatSite').destroy()
+	VR.chatSite = VR.Sprite('chatSite')
+	VR.find('Default').addChild(VR.chatSite)
+	VR.chatSite.setFrom([0,-5,-20])
+	VR.chatSite.setSize(5,5)
+	VR.chatSite.webOpen('localhost:5500/chatModule_controls', 400, 0.8)
+	VR.chatSite.getMaterial().enableTransparency()
+	VR.chatSite.getMaterial().setDepthTest('GL_ALWAYS')
+	
+	
+</core>
+    </Script>
+    <Script base_name="test" group="no group" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+
+	VR.chatModule_handler("chatModule_chatMessage&lt;chatModule_seperator&gt;Dummy&lt;chatModule_seperator&gt;This is a test message !")
+</core>
+    </Script>
+  </Scripts>
+  <Sockets persistency="666"/>
+  <Background color="0.6 0.6 0.6" format=".png" path="" persistency="666" type="0"/>
+  <Navigation active="Orbit" persistency="666"/>
+  <Materials persistency="666"/>
+  <Semantics persistency="666"/>
+</Scene>
