@@ -3,7 +3,7 @@
   <Objects>
     <Object base_name="Root" name_space="__global__" name_suffix="0" persistency="666" pickable="0" type="Object" visible="4294967295">
       <Object ambient="0.3 0.3 0.3 1" base_name="light" beacon="Headlight_beacon" diffuse="1 1 1 1" lightType="point" name_space="__global__" name_suffix="0" on="1" persistency="666" photometricMap="" pickable="0" shadow="0" shadowColor="0.1 0.1 0.1 1" shadowMapRes="2048" shadowVolume="1e+06 1e+06 1e+06 -1e+06 -1e+06 -1e+06 1" specular="0.1 0.1 0.1 1" type="Light" visible="4294967295">
-        <Object accept_root="1" aspect="1" at="-5 -3 -20" at_dir="0" base_name="Default" far="512" fov="1.0472" from="-42.4683 0.369417 29.9663" name_space="__global__" name_suffix="0" near="0.1" orthoSize="100" persistency="666" pickable="0" scale="1 1 1" type="Camera" up="0 1 0" visible="4294967295">
+        <Object accept_root="1" aspect="1" at="-41.9148 1.63242 52.1512" at_dir="0" base_name="Default" far="512" fov="1.0472" from="-64.5714 2.11385 59.1594" name_space="__global__" name_suffix="0" near="0.1" orthoSize="100" persistency="666" pickable="0" scale="1 1 1" type="Camera" up="0 1 0" visible="4294967295">
           <attachments>
             <Node base_name="transform" name_space="VRAttachment" name_suffix="0" persistency="666" value=""/>
           </attachments>
@@ -75,6 +75,11 @@
 	&lt;body&gt;
 		&lt;div id="chatBox"&gt;
 			&lt;div id="background"&gt;
+			&lt;div id="profile" &gt;Currently chatting as: 
+				&lt;span id="usernamePreview"&gt;User&lt;/span&gt;
+					&lt;i id ="usernameEditIcon" onclick="toggleUsernameChangeForm(false)" class="fa far fa-solid fa-pencil"&gt;&lt;/i&gt;
+					&lt;i id="cancelEditIcon" onclick="toggleUsernameChangeForm(true)" class =" fa far fa-solid fa-x"&gt;X&lt;/i&gt;
+			&lt;/div&gt;
 					&lt;div id="messageContainer"&gt;
 					&lt;/div&gt;				
 	   				&lt;textarea id="messageContent" placeholder="Message" name="msg" required&gt;&lt;/textarea&gt;
@@ -100,6 +105,7 @@
 		function changeUsername(newUsername)
 		{
 			username = newUsername;
+			send("chatModule_changeUsername" + seperator + username)
 		}
 	 	function displayMessage(messageOwner, messageText, origin)
 	 	{
@@ -155,7 +161,6 @@
 			}	
 			if(messageFragments[0] == "chatModule_changeUsername")
 			{
-
 				var newUsername = messageFragments[1];
 				changeUsername(newUsername);
 			}					
@@ -168,6 +173,39 @@
 		   copyContainer.select();
 		   document.execCommand('copy');
 		   copyContainer.value = tempsave;
+		}
+		var changeFormActive = false;
+		function toggleUsernameChangeForm(isCancel)
+		{
+			var usernameEditIcon = document.getElementById("usernameEditIcon");
+			var cancelEditIcon = document.getElementById("cancelEditIcon");
+			var profile = document.getElementById("profile");
+			var usernamePreview = document.getElementById("usernamePreview");
+			
+			if(changeFormActive)
+			{
+				if(isCancel)
+				{
+					usernamePreview.innerHTML = username;			
+				}
+				else
+				{
+					var newUsername = usernamePreview.innerHTML;
+					changeUsername(newUsername);		
+				}				
+				usernamePreview.contentEditable = "false";
+				cancelEditIcon.style.display = "none";
+				changeFormActive = false;	
+				usernameEditIcon.className = "fa far fa-solid fa-pencil";
+			}
+			else
+			{							
+				usernameEditIcon.className = "fa far fa-solid fa-download";
+				usernamePreview.contentEditable = "true";
+				usernamePreview.focus();
+				cancelEditIcon.style.display = "inline-block";
+				changeFormActive = true;			
+			}
 		}
 		function sendDummy()
 		{			
@@ -299,10 +337,6 @@
 				document.getElementById("visibilityToggleIcon").className = "fa far fa-solid fa-eye-slash"
 			}
 		}
-		function updateUsername(newUsername)
-		{
-			send('chatModule_changeUsername&lt;chatModule_seperator&gt;' + newUsername)
-		}
 		var tbs = document.getElementsByClassName('tbb');
 		for (var tb in tbs) {
 			tbs[tb].onclick=function(event) {
@@ -432,6 +466,14 @@ textarea {
 {
   opacity: 1;
 } 
+#profile
+{
+	color: white;
+}
+#cancelEditIcon
+{
+	display: none;
+}
 &lt;!-- chatModule_controls css--&gt;
 
 body
@@ -480,6 +522,8 @@ body
 		ID = dev.getKey()
 		VR.chatDev = dev
 		VR.chatID = ID
+		
+	print m
 	
 	if m.startswith("chatModule_setDrag"):
 		VR.chatModule.setPickable(int(n[1]))
@@ -502,7 +546,7 @@ body
 	if m.startswith("chatModule_changeUsername"):
 		print"chatModule changed username"
 		print m
-		chatDev.answer(chatID,m)
+		#chatDev.answer(chatID,m)
 
 	if m.startswith("chatModule_debugMessage"):
 		print(m)
