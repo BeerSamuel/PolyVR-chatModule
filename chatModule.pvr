@@ -3,7 +3,7 @@
   <Objects>
     <Object base_name="Root" name_space="__global__" name_suffix="0" persistency="666" pickable="0" type="Object" visible="4294967295">
       <Object ambient="0.3 0.3 0.3 1" base_name="light" beacon="Headlight_beacon" diffuse="1 1 1 1" lightType="point" name_space="__global__" name_suffix="0" on="1" persistency="666" photometricMap="" pickable="0" shadow="0" shadowColor="0.1 0.1 0.1 1" shadowMapRes="2048" shadowVolume="1e+06 1e+06 1e+06 -1e+06 -1e+06 -1e+06 1" specular="0.1 0.1 0.1 1" type="Light" visible="4294967295">
-        <Object accept_root="1" aspect="1" at="0 0 0" at_dir="0" base_name="Default" far="512" fov="1.0472" from="2.73154 1.6575 1.51281" name_space="__global__" name_suffix="0" near="0.1" orthoSize="100" persistency="666" pickable="0" scale="1 1 1" type="Camera" up="0 1 0" visible="4294967295">
+        <Object accept_root="1" aspect="1" at="-5 -3 -20" at_dir="0" base_name="Default" far="512" fov="1.0472" from="-42.4683 0.369417 29.9663" name_space="__global__" name_suffix="0" near="0.1" orthoSize="100" persistency="666" pickable="0" scale="1 1 1" type="Camera" up="0 1 0" visible="4294967295">
           <attachments>
             <Node base_name="transform" name_space="VRAttachment" name_suffix="0" persistency="666" value=""/>
           </attachments>
@@ -36,7 +36,7 @@
       <core>
 	import VR
 
-	address = '141.3.150.44'
+	address = '172.23.212.61'
 	port = 1111
 	
 	def onClientMsg(m):
@@ -45,7 +45,7 @@
 		
 	VR.cli = VR.TCPClient()
 	VR.cli.onMessage(onClientMsg)
-	VR.cli.connect(address)
+	VR.cli.connect(address, port)
 	VR.cli.send('hello Server!')
 </core>
     </Script>
@@ -69,7 +69,7 @@
       <core>
 &lt;html&gt;
 	&lt;head&gt;
-		&lt;link rel="stylesheet" href="gui/font-awesome-4.5.0/css/font-awesome.min.css"&gt;
+		&lt;link rel="stylesheet" href="font-awesome-4.5.0/css/font-awesome.min.css"&gt;
 		&lt;link rel="stylesheet" href="chatModule_css"&gt;
 	&lt;/head&gt;
 	&lt;body&gt;
@@ -79,7 +79,7 @@
 					&lt;/div&gt;				
 	   				&lt;textarea id="messageContent" placeholder="Message" name="msg" required&gt;&lt;/textarea&gt;
 					&lt;button onclick="handleMessage();" class="button"&gt;Send&lt;/button&gt;
-					&lt;button onclick="sendDummy();" class="button"&gt;Send Dummy&lt;/button&gt;
+&lt;!-- For Debug--&gt;	&lt;button onclick="sendDummy();" class="button"&gt;Send Dummy&lt;/button&gt;
 			&lt;/div&gt; 
 		&lt;/div&gt;
 		&lt;script&gt;
@@ -97,7 +97,10 @@
 		{
 			send('chatModule_sendMessage'+ seperator + username + seperator + message);
 		}
-	
+		function changeUsername(newUsername)
+		{
+			username = newUsername;
+		}
 	 	function displayMessage(messageOwner, messageText, origin)
 	 	{
 	 		var messageContainer = document.getElementById('messageContainer');
@@ -152,10 +155,9 @@
 			}	
 			if(messageFragments[0] == "chatModule_changeUsername")
 			{
-				var messageContainer = document.getElementById('messageContainer');
-				messageContainer.innerHTML = "";
+
 				var newUsername = messageFragments[1];
-				username = newUsername;
+				changeUsername(newUsername);
 			}					
 		}
 		function copyMessage(message)
@@ -224,7 +226,7 @@
     <Script base_name="chatModule_controls" group="chatModule" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="HTML">
       <core>
 &lt;head&gt;
-	&lt;link rel="stylesheet" href="gui/font-awesome-4.5.0/css/font-awesome.min.css"&gt;
+	&lt;link rel="stylesheet" href="font-awesome-4.5.0/css/font-awesome.min.css"&gt;
 	&lt;link rel="stylesheet" href="chatModule_css"&gt;
 &lt;/head&gt;
 &lt;manifest "permissions": ["*://developer.mozilla.org/*","webRequest","clipboardWrite",
@@ -244,7 +246,6 @@
 
 		function send(m){ websocket.send(m); };
 		
-
 		var controls = document.getElementById("controls");
 		function toggleControls()
 		{
@@ -298,7 +299,10 @@
 				document.getElementById("visibilityToggleIcon").className = "fa far fa-solid fa-eye-slash"
 			}
 		}
-		
+		function updateUsername(newUsername)
+		{
+			send('chatModule_changeUsername&lt;chatModule_seperator&gt;' + newUsername)
+		}
 		var tbs = document.getElementsByClassName('tbb');
 		for (var tb in tbs) {
 			tbs[tb].onclick=function(event) {
@@ -502,7 +506,7 @@ body
 
 	if m.startswith("chatModule_debugMessage"):
 		print(m)
-		dev.answer(ID,m)
+		#dev.answer(ID,m)
 </core>
       <trig type="on_device" dev="server1" state="Released" param="" key="-1" base_name="trigger" name_space="__global__" name_suffix="4" persistency="666"/>
     </Script>
