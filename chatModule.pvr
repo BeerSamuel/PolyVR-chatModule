@@ -3,7 +3,7 @@
   <Objects>
     <Object base_name="Root" name_space="__global__" name_suffix="0" persistency="666" pickable="0" type="Object" visible="4294967295">
       <Object ambient="0.3 0.3 0.3 1" base_name="light" beacon="Headlight_beacon" diffuse="1 1 1 1" lightType="point" name_space="__global__" name_suffix="0" on="1" persistency="666" photometricMap="" pickable="0" shadow="0" shadowColor="0.1 0.1 0.1 1" shadowMapRes="2048" shadowVolume="1e+06 1e+06 1e+06 -1e+06 -1e+06 -1e+06 1" specular="0.1 0.1 0.1 1" type="Light" visible="4294967295">
-        <Object accept_root="1" aspect="1" at="-41.9148 1.63242 52.1512" at_dir="0" base_name="Default" far="512" fov="1.0472" from="-64.5714 2.11385 59.1594" name_space="__global__" name_suffix="0" near="0.1" orthoSize="100" persistency="666" pickable="0" scale="1 1 1" type="Camera" up="0 1 0" visible="4294967295">
+        <Object accept_root="1" aspect="1" at="-41.9148 1.63242 52.1512" at_dir="0" base_name="Default" far="512" fov="1.0472" from="-66.3984 2.15267 59.7246" name_space="__global__" name_suffix="0" near="0.1" orthoSize="100" persistency="666" pickable="0" scale="1 1 1" type="Camera" up="0 1 0" visible="4294967295">
           <attachments>
             <Node base_name="transform" name_space="VRAttachment" name_suffix="0" persistency="666" value=""/>
           </attachments>
@@ -36,7 +36,7 @@
       <core>
 	import VR
 
-	address = '172.23.212.61'
+	address = '141.3.150.44'
 	port = 1111
 	
 	def onClientMsg(m):
@@ -55,6 +55,7 @@
 
 	def onServerMsg(m):
 		print 'server received:', m
+		VR.chatModule_handler(m)
 		return "hello from server!"
 		
 	port = 1111 # port for the server to listen on
@@ -514,8 +515,10 @@ body
     <Script base_name="chatModule_handler" group="chatModule" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
       <core>
 	import VR, os
+	
 	if isinstance(dev, str):
 		m = dev
+	
 	else:
 		m = dev.getMessage()
 		n = m.split("&lt;chatModule_seperator&gt;")
@@ -536,8 +539,8 @@ body
 	if m.startswith("chatModule_sendMessage"):
 		print "chatModule sent Message: " + n[2] + " from User: " + n[1]
 		#Send Message to other client.
+		m = "chatModule_chatMessage&lt;chatModule_seperator&gt;" + n[1] +"&lt;chatModule_seperator&gt; + n[2]
 		VR.ClientSend(m)
-		
 	if m.startswith("chatModule_chatMessage"):
 		print "chatModule received Message"
 		print m
