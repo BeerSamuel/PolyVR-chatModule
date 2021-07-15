@@ -527,31 +527,32 @@ body
 		VR.chatID = ID
 		
 	print m
-	
+
 	if m.startswith("chatModule_setDrag"):
 		VR.chatModule.setPickable(int(n[1]))
 		print "chatModule set drag to " + n[1]
 	
-	if m.startswith("chatModule_setVisibility"):
+	elif m.startswith("chatModule_setVisibility"):
 		VR.chatModule.setVisible(int(n[1]))
 		print "chatModule set visibility to " + n[1]
 	
-	if m.startswith("chatModule_sendMessage"):
+	elif m.startswith("chatModule_sendMessage"):
 		print "chatModule sent Message: " + n[2] + " from User: " + n[1]
 		#Send Message to other client.
-		m = "chatModule_chatMessage&lt;chatModule_seperator&gt;" + n[1] +"&lt;chatModule_seperator&gt; + n[2]
+		m = "chatModule_chatMessage&lt;chatModule_seperator&gt;" + n[1] +"&lt;chatModule_seperator&gt;" + n[2]
 		VR.ClientSend(m)
-	if m.startswith("chatModule_chatMessage"):
+		
+	elif m.startswith("chatModule_chatMessage"):
 		print "chatModule received Message"
 		print m
 		VR.chatDev.answer(VR.chatID,m)
 
-	if m.startswith("chatModule_changeUsername"):
+	elif m.startswith("chatModule_changeUsername"):
 		print"chatModule changed username"
 		print m
 		#chatDev.answer(chatID,m)
 
-	if m.startswith("chatModule_debugMessage"):
+	elif m.startswith("chatModule_debugMessage"):
 		print(m)
 		#dev.answer(ID,m)
 </core>
